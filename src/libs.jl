@@ -1,3 +1,8 @@
+using Makie;
+using Statistics;
+using FFTW;
+using AbstractPlotting: textslider;
+using Observables;
 
 function readWhole(fileName, tip::T) where {T <: Integer}
         buff = (fileName |> stat).size |> i -> zeros(T, i / sizeof(T) |> Int64);
@@ -60,9 +65,13 @@ function powerSpectar(arr, sampTime, ti, fps=60, seconds=1)
         [i for i=0:samples]
 end
 
-function powerSpectarElement(arr, sampTime, i, fps=60)
+function powerSpectarElement(i, arr, sampTime, fps=60)
         dataPFrame = sampTime/fps |> floor |> Int64;
         fftsplice(arr[i*dataPFrame+1:(i+1)*dataPFrame+1])
+end
+function timeDomainElement(arr, sampTime, i, fps=60)
+        dataPFrame = sampTime/fps |> floor |> Int64;
+        arr[i*dataPFrame+1:(i+1)*dataPFrame+1]
 end
 function displayRealTime!(s, ti, arr)
         for i=1:1:600
@@ -76,6 +85,44 @@ function fftsplice(arr)
         arr[1:end+(end%2-1)] |>
         fft .|>
         abs |>
-        i -> i[(end/2 |> ceil |> Int64):end] + i[(end/2 |> ceil |> Int64):-1:1] |>
+        i -> i[1:(end/2 |> ceil |> Int64)] |> #+ i[(end/2 |> ceil |> Int64):-1:1] |>
         i -> i[3:end-1]
+end
+function bpskFistStage(t, ar, sampleTime = 1800000, fps=60)
+    raw = timeDomainElement(ar, sampleTime, t, fps)
+    signalFreq = sampleTime*(7431/30000+0.5)
+    steper = (1+length(raw)*t:length(raw)*(t+1))/sampleTime
+    [cos(2*pi*signalFreq*i) for i=steper]  .* raw
+end
+
+
+function integration(arr::Array{T, 1}, sampTime) where {T <: Number}
+        retArr = zeros(Float64, length(arr));
+        retArr[1] = arr[1]/sampTime;
+        for i=2:length(arr)
+                retArr[i] = retArr[i - 1] + arr[i]/sampTime;
+        end
+        retArr
+end
+
+function analizeFile(filePath, sampleRate=1800000)
+        ar=readWhole(filePath, UInt16(0));
+        s1, a = AbstractPlotting.textslider(0:100, "1000t", start = 0);
+        smin, amin = AbstractPlotting.textslider(0:100, "10tmin", start = 0);
+        smicro, amicro = AbstractPlotting.textslider(1:10, "t", start = 1);
+
+        treal = lift((t1, t2, t3) -> t1*1000 + t2*10 + t3, a, amin, amicro);
+        sFps, fps = AbstractPlotting.textslider(10:500, "fps", start = 30);
+        timeLift = lift((treal, fps) -> "$(round(treal/fps, digits=3))s", treal, fps);
+
+        myLift = lift(powerSpectarElement, treal, ar, sampleRate, fps);
+        fftElements = lines(myLift);
+        myLift2 = lift(bpskFistStage, treal, ar, sampleRate, fps);
+        timeElements = lines(myLift2);
+        integrator_lift = lift(integration, myLift2, sampleRate);
+        integrator_plot = lines(integrator_lift);
+        integrator_plot = scatter!(integrator_plot, [(0, 5), (0, -5)]);
+        seconds_label = text(timeLift)
+
+        vbox(hbox(s1, smin, smicro, sFps, seconds_label), fftElements, integrator_plot, parent=Scene())
 end

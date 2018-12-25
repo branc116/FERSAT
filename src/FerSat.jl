@@ -1,5 +1,4 @@
 module FerSat
-
-greet() = print("Hello World!")
+include("libs.jl")
 
 end # module
