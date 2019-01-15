@@ -11,7 +11,7 @@ function gimme()
 	T = 1/1800000;
 	shiftFreq = 23000;
 	shiftExp = [exp(-im*2*pi*shiftFreq*n*T) for n in 1:dataLength];
-	data = data.*shiftExp; 
+	data = data.*shiftExp;
 
 	# create Butterworth lowpass filter
 	responsetype = Lowpass(1500; fs=1800000);
@@ -20,40 +20,10 @@ function gimme()
 	# apply created filter to sample array
 	db = filt(digitalfilter(responsetype, prototype), data);
 end
-try	
-	db; 
+try
+	db;
 catch
 	db = gimme();
-end
-#=
-# generate and plot 32768-FFT results
-windowSize = 32768;
-n = floor(Int, size(dbdAvg,1)/windowSize);
-for i in 1:n
-	F = fft(dbdAvg[(i-1)*windowSize+1:i*windowSize]);
-	F = fftshift(F);
-	Fr = [20*log10(abs(i)) for i in F];
-	plot(Fr[15000:17500])
-	#ylims!(-30, 60);
-	gui();
-	sleep(0.04)
-end
-=#
-function unweraper(x)
-	state = 0;
-	retArr = Array{Float32}(length(x));
-	
-	for i=1:length(x)
-		w = x[i];
-		if (pi - w < 0.01)
-			state--;
-		end
-		if (w + pi < -0.0) 
-			state++;
-		end
-		ret[i] = x[i] + pi*state; 
-	end
-	retArr
 end
 
 angularv = (x, i) -> i> 1 && i <= length(x) ? angle(x[i]/x[i-1]) : 0
@@ -103,5 +73,3 @@ end
 =#
 
 # EOF
-
-

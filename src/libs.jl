@@ -1,10 +1,10 @@
 using Makie;
 using Statistics;
 using FFTW;
-using AbstractPlotting: textslider;
+using AbstractPlotting;
 using Observables;
 
-function readWhole(fileName, tip::T) where {T <: Integer}
+function readWhole(fileName, tip::T) where {T <: Number}
         buff = (fileName |> stat).size |> i -> zeros(T, i / sizeof(T) |> Int64);
         stream = open(fileName);
         buff = read!(stream, buff);
@@ -110,7 +110,7 @@ function analizeFile(filePath, sampleRate=1800000)
         s1, a = AbstractPlotting.textslider(0:100, "1000t", start = 0);
         smin, amin = AbstractPlotting.textslider(0:100, "10tmin", start = 0);
         smicro, amicro = AbstractPlotting.textslider(1:10, "t", start = 1);
-
+        AbstractPlotting.button()
         treal = lift((t1, t2, t3) -> t1*1000 + t2*10 + t3, a, amin, amicro);
         sFps, fps = AbstractPlotting.textslider(10:500, "fps", start = 30);
         timeLift = lift((treal, fps) -> "$(round(treal/fps, digits=3))s", treal, fps);
