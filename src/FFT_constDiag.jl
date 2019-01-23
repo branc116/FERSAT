@@ -3,7 +3,7 @@ using FFTW;
 using DSP;
 # read I/Q samples
 
-function shift(data::T, segment::Number, shiftFreq::Number=23000, sampleTime=1800000) where {T<:AbstractArray{<:Number}} 
+function shift(data::T, segment::Number, shiftFreq::Number, sampleTime=1800000) where {T<:AbstractArray{<:Number}} 
     len = length(data);
     constant = (-im*2*pi*shiftFreq/sampleTime);
     return exp.(([(len*(segment - 1)):(len*segment - 1)] .* constant)...) .* data;
@@ -24,6 +24,27 @@ function diffNaiv(x::T) where {T1<:Real, T<:AbstractArray{T1}}
 end
 function sign(data::T) where {T<:AbstractArray{<:Real}}
     return Base.sign.(data);
+end
+function myFft(data)
+    fft(data) |> fftshift .|> abs .|> log10
+end
+function isData(fftData, sampleRate=1800000)
+    a = fftData |> findmax
+    if (a[1] > 1)
+        return true
+    end
+    return false
+end
+function getShiftFreq(fftData, sampleRate=1800000)
+    a = fftData |> findmax
+    len=length(fftData);
+    if (a[1] > 1)
+        bin = a[2];
+        return bin*sampleRate/len;
+    end
+end
+function bitrate(fftdata, )
+    
 end
 # function gimme()
 #     data = reinterpret(Complex{Float32}, read("/home/domagoj/gqrx_20181207_153804_437485000_1800000_fc.raw"));

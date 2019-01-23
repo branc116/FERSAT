@@ -181,11 +181,13 @@ function analizeComplex(filePath, sampleRate=1800000)
 
     _sign = lift(sign, _unwrapDeriv);
     _signTuple = lift(toTuple, _sign);
-
+    _fft = lift(myFft, _lopas);
+    _fftTuple = lift(toTuple, _fft);
     _text = FerSatGui.createNormalText(tSeconds, (10, 10));
     FerSatGui.join(
             FerSatGui.createMultiPlot([
                 FerSatGui.NamedObsevableArray(curSegmentTuple, "Current segment"),
+                FerSatGui.NamedObsevableArray(_fftTuple, "Fft"),
                 FerSatGui.NamedObsevableArray(shiftedTuple, "Shifted"),
                 FerSatGui.NamedObsevableArray(_lopasTuple, "Lo pass"),
                 FerSatGui.NamedObsevableArray(_unwrapTuple, "Unwrapped"),
