@@ -27,6 +27,30 @@ function sign(data::T) where {T<:AbstractArray{<:Real}}
     return Base.sign.(data);
 end
 
+function myFft(data)
+    fft(data) |> fftshift .|> abs .|> log10
+end
+function isData(fftData, sampleRate=1800000)
+    a = fftData |> findmax
+    if (a[1] > 1)
+        return true
+    end
+    return false
+end
+function getShiftFreq(fftData, sampleRate=1800000)
+    a = fftData |> findmax
+    len=length(fftData);
+    if (a[1] > 1)
+        bin = a[2];
+        return bin*sampleRate/len;
+    end
+end
+function bitrate(fftdata, )
+    
+end
+
+
+
 
 function readWhole(fileName, tip::T) where {T <: Number}
     buff = (fileName |> stat).size |> i -> zeros(T, i / sizeof(T) |> Int64);

@@ -61,7 +61,9 @@ function analizeComplex(filePath, sampleRate=1800000)
 
     _sign = lift(sign, _unwrapDeriv);
     # _signTuple = lift(toTuple, _sign);
-
+    _signTuple = lift(toTuple, _sign);
+    _fft = lift(myFft, _lopas);
+    _fftTuple = lift(toTuple, _fft);
     _text = FerSatGui.createNormalText(tSeconds, (10, 10));
     FerSatGui.join(
             FerSatGui.createMultiPlot([
@@ -71,6 +73,7 @@ function analizeComplex(filePath, sampleRate=1800000)
                 FerSatGui.NamedObsevableArray(_unwrap, "Unwrapped"),
                 FerSatGui.NamedObsevableArray(_unwrapDeriv, "Unwrapped derivation"),
                 FerSatGui.NamedObsevableArray(_sign, "Sign"), ], 2
+
         ), [s1, s10, s100, s1000, sSegSize, sShiftFreq, _text])
     # sFps, fps = AbstractPlotting.textslider(10:500, "fps", start = 30);
 end
