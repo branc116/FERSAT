@@ -24,8 +24,8 @@ module FerSatGui
         checkBoxes::CheckBoxGroup
         maxActive::Unsigned
     end
-    struct NamedObsevableArray{T, N} 
-        array::Observable{<:AbstractArray{T, N}}
+    struct NamedObsevableArray
+        array::Observable{<:AbstractArray}
         name::String
     end
     function Base.:*(rec::GeometryTypes.HyperRectangle{N, T}, fac) where {N, T}
@@ -131,11 +131,17 @@ module FerSatGui
             end
         end
     end
-    function createMultiPlot(lifts::Array{NamedObsevableArray{T, N}, M}, maxPlots) where {T1 <:Real, T <: Union{T1, Tuple{T1, T1}, Complex{T1}}, N, M} 
+    function createMultiPlot(lifts::Array{NamedObsevableArray, M}, maxPlots) where {N, M} 
+        maxPlots = maxPlots > length(lifts) ? length(lifts) : maxPlots;
         checkboxes::CheckBoxGroup = createCheckBoxGroup([n.name for n=lifts], maxPlots);
-        nodes = T  <: Tuple ? [Node{Array{T, N}}([(0, 0), (0, 10), (0, 0), (10, 0)]) for i=1:maxPlots] : [Node{Array{T, N}}([(T1(1):T1(2))...]) for i=1:maxPlots];
-        textNodes = [Node("$i") for i=1:maxPlots];
         liftsToNodes = Dict();
+        for i=1:maxPlots
+            push!(checkboxes.checkBoxes[i].checked, true);
+            setindex!(liftsToNodes, i, i);
+        end
+        nodes = [Node(Array(lifts[i].array |> to_value |> toTuple)) for i=1:maxPlots];
+        textNodes = [Node(lifts[i].name) for i=1:maxPlots];
+        
         myLines = [lines(n)[end].parent for n=nodes];
         myTexts = [text(n, camera=campixel!, raw=true, position=(50, 15))[end].parent for n=textNodes];
         for i=1:length(lifts)
@@ -146,7 +152,7 @@ module FerSatGui
                 if (length(nodes) >= i)
                     liftIndex = ev[i];
                     liftArray = to_value(lifts[liftIndex].array);
-                    push!(nodes[i], liftArray);
+                    push!(nodes[i], toTuple(liftArray));
                     AbstractPlotting.update_limits!(myLines[i]);
                     AbstractPlotting.scale_scene!(myLines[i]);
                     AbstractPlotting.update_cam!(myLines[i]);

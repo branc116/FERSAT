@@ -4,7 +4,10 @@ using DSP;
 using Statistics;
 # read I/Q samples
 
-function shift(data::T, segment::Number, shiftFreq::Number=23000, sampleTime=1800000) where {T<:AbstractArray{<:Number}} 
+function shift(data::T, segment::Number, shiftFreq::Number=23000, sampleTime=1800000) where {T<:AbstractArray{<:Number}}
+    if (shiftFreq == -1)
+        return data .|> Complex{Float64};
+    end
     len = length(data);
     constant = (-im*2*pi*shiftFreq/sampleTime);
     return exp.(([(len*(segment - 1)):(len*segment - 1)] .* constant)...) .* data;
@@ -27,8 +30,13 @@ function sign(data::T) where {T<:AbstractArray{<:Real}}
     return Base.sign.(data);
 end
 
-function myFft(data)
-    fft(data) |> fftshift .|> abs .|> log10
+function myFft(data, decimate=-1)
+    retdata = fft(data) .|> abs .|> log10
+    if (decimate > 0)
+        return retdata[(((50-decimate)*end/100) |> floor |> Int64):(((50+decimate)*end/100) |> floor |> Int64)]
+    else
+        return retdata;
+    end
 end
 function isData(fftData, sampleRate=1800000)
     a = fftData |> findmax
@@ -44,6 +52,7 @@ function getShiftFreq(fftData, sampleRate=1800000)
         bin = a[2];
         return bin*sampleRate/len;
     end
+    return Float64(-1);
 end
 function bitrate(fftdata, )
     
