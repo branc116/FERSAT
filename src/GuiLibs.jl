@@ -4,7 +4,7 @@ module FerSatGui
     using Observables;
     using DataStructures;
     using GeometryTypes;
-
+    include("commonLibs.jl");
     struct CheckBox
         scene::Scene
         checked::Observable{Bool}
@@ -126,15 +126,12 @@ module FerSatGui
         on(namedOA.array) do ev
             if haskey(liftsToNodes, i)
                 nodeToUpdate = liftsToNodes[i];
-                push!(nodes[nodeToUpdate], ev);
-                # AbstractPlotting.update_limits!(myLines[nodeToUpdate]);
-                # AbstractPlotting.update_cam!(myLines[nodeToUpdate]);
-                # AbstractPlotting.update_cam!(myLines[nodeToUpdate], area) = update_cam!(scene, cameracontrols(scene), area)
+                push!(nodes[nodeToUpdate], toTuple(ev));
                 push!(textNodes[nodeToUpdate], lifts[i].name)
             end
         end
     end
-    function createMultiPlot(lifts::Array{NamedObsevableArray{T, N}, M}, maxPlots) where {T1 <:Real, T <: Union{T1, Tuple{T1, T1}}, N, M} 
+    function createMultiPlot(lifts::Array{NamedObsevableArray{T, N}, M}, maxPlots) where {T1 <:Real, T <: Union{T1, Tuple{T1, T1}, Complex{T1}}, N, M} 
         checkboxes::CheckBoxGroup = createCheckBoxGroup([n.name for n=lifts], maxPlots);
         nodes = T  <: Tuple ? [Node{Array{T, N}}([(0, 0), (0, 10), (0, 0), (10, 0)]) for i=1:maxPlots] : [Node{Array{T, N}}([(T1(1):T1(2))...]) for i=1:maxPlots];
         textNodes = [Node("$i") for i=1:maxPlots];
@@ -153,8 +150,6 @@ module FerSatGui
                     AbstractPlotting.update_limits!(myLines[i]);
                     AbstractPlotting.scale_scene!(myLines[i]);
                     AbstractPlotting.update_cam!(myLines[i]);
-                    # AbstractPlotting.update_limits!(myLines[i], myLines[i][:limits][], myLines[i][:padding][])
-                    
 
                     limits = AbstractPlotting.limits(myLines[i])[];
                     translate = limits.widths .* 0.2;
